@@ -7,54 +7,48 @@ from collections import deque
 import plotly.graph_objs as go
 import random
 
-app = dash.Dash('vehicle-data')
+app = dash.Dash('Sensor Data')
 
 max_length = 50
 times = deque(maxlen=max_length)
-oil_temps = deque(maxlen=max_length)
-intake_temps = deque(maxlen=max_length)
-coolant_temps = deque(maxlen=max_length)
-rpms = deque(maxlen=max_length)
-speeds = deque(maxlen=max_length)
-throttle_pos = deque(maxlen=max_length)
+room_temp = deque(maxlen=max_length)
+footfall  = deque(maxlen=max_length)
+humidity = deque(maxlen=max_length)
+water_level = deque(maxlen=max_length)
 
-data_dict = {"Oil Temperature":oil_temps,
-"Intake Temperature": intake_temps,
-"Coolant Temperature": coolant_temps,
-"RPM":rpms,
-"Speed":speeds,
-"Throttle Position":throttle_pos}
+data_dict = {"Room Temperature":room_temp,
+"footfall count": footfall,
+"humidity": humidity,
+"Water Level":water_level}
 
 
-def update_obd_values(times, oil_temps, intake_temps, coolant_temps, rpms, speeds, throttle_pos):
+def update_obd_values(times, room_temp, footfall, humidity, water_level):
 
     times.append(time.time())
     if len(times) == 1:
         #starting relevant values
-        oil_temps.append(random.randrange(180,230))
-        intake_temps.append(random.randrange(95,115))
-        coolant_temps.append(random.randrange(170,220))
-        rpms.append(random.randrange(1000,9500))
-        speeds.append(random.randrange(30,140))
-        throttle_pos.append(random.randrange(10,90))
+        room_temp.append(random.randrange(18,50))
+        footfall.append(random.randrange(0,1000))
+        humidity.append(random.randrange(40,60))
+        water_level.append(random.randrange(1000,9500))
     else:
-        for data_of_interest in [oil_temps, intake_temps, coolant_temps, rpms, speeds, throttle_pos]:
+        for data_of_interest in [room_temp, footfall, humidity, water_level]:
             data_of_interest.append(data_of_interest[-1]+data_of_interest[-1]*random.uniform(-0.0001,0.0001))
 
-    return times, oil_temps, intake_temps, coolant_temps, rpms, speeds, throttle_pos
+    return times, room_temp, footfall, humidity, water_level
 
-times, oil_temps, intake_temps, coolant_temps, rpms, speeds, throttle_pos = update_obd_values(times, oil_temps, intake_temps, coolant_temps, rpms, speeds, throttle_pos)
+times, room_temp, footfall, humidity, water_level = update_obd_values(times, room_temp, footfall, humidity, water_level)
 
 app.layout = html.Div([
     html.Div([
-        html.H2('Vehicle Data',
+        html.H2('Sensor Data',
                 style={'float': 'left',
                        }),
         ]),
-    dcc.Dropdown(id='vehicle-data-name',
+    dcc.Dropdown(id='sensor-data-name',
                  options=[{'label': s, 'value': s}
                           for s in data_dict.keys()],
-                 value=['Coolant Temperature','Oil Temperature','Intake Temperature'],
+                 value=['Room Temperature'],
                  multi=True
                  ),
     html.Div(children=html.Div(id='graphs'), className='row'),
@@ -66,13 +60,13 @@ app.layout = html.Div([
 
 @app.callback(
     dash.dependencies.Output('graphs','children'),
-    [dash.dependencies.Input('vehicle-data-name', 'value')],
+    [dash.dependencies.Input('sensor-data-name', 'value')],
     events=[dash.dependencies.Event('graph-update', 'interval')]
     )
 
 def update_graph(data_names):
     graphs = []
-    update_obd_values(times, oil_temps, intake_temps, coolant_temps, rpms, speeds, throttle_pos)
+    update_obd_values(times, room_temp, footfall, humidity, water_level)
     if len(data_names)>2:
         class_choice = 'col s12 m6 l4'
     elif len(data_names) == 2:
